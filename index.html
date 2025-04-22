@@ -85,8 +85,6 @@
     const diasContainer = document.getElementById('diasContainer');
     const registrarBtn = document.getElementById('registrarBtn');
     const alumnoSelect = document.getElementById('alumno');
-
-    const ALUMNOS = ["Emanuel", "Lucero", "Tony", "Paty", "Modesto", "Teresa", "Genesis", "José Perez", "Aylin", "Alexis", "Eduar", "Joselin", "Nancy"];
     const NUM_DIAS = 60;
 
     const obtenerRegistros = async (alumno) => {
@@ -98,7 +96,6 @@
     const mostrarDias = async () => {
       const nombreAlumno = alumnoSelect.value;
       const registrosAlumno = await obtenerRegistros(nombreAlumno);
-      console.log('Registros:', registrosAlumno); // <- agrega esto
 
       diasContainer.innerHTML = '';
       for (let i = 0; i < NUM_DIAS; i++) {
@@ -116,23 +113,36 @@
           diaDiv.classList.add('disabled');
         }
 
-        diaDiv.addEventListener('click', async () => {
-          if (!diaDiv.classList.contains('done') && !diaDiv.classList.contains('disabled')) {
-            const res = await fetch(URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ nombre: nombreAlumno, fecha: diaStr, actividad: true })
-            });
-            diaDiv.classList.add('done');
-            alert("¡Actividad registrada para el día " + dia.getDate() + "!");
-          }
-        });
-
         diasContainer.appendChild(diaDiv);
       }
     };
 
-    registrarBtn.addEventListener('click', mostrarDias);
+    const registrarHoy = async () => {
+      const nombreAlumno = alumnoSelect.value;
+      const hoy = new Date();
+      const hoyStr = hoy.toISOString().split('T')[0];
+
+      const registros = await obtenerRegistros(nombreAlumno);
+      if (registros.includes(hoyStr)) {
+        alert("Ya registraste tu actividad hoy.");
+        return;
+      }
+
+      await fetch(URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: nombreAlumno, fecha: hoyStr, actividad: true })
+      });
+
+      alert("¡Actividad registrada hoy!");
+      await mostrarDias(); // refresca calendario
+    };
+
+    registrarBtn.addEventListener('click', registrarHoy);
+    alumnoSelect.addEventListener('change', mostrarDias);
+
+    // Mostrar al cargar
+    mostrarDias();
   </script>
 </body>
 </html>
