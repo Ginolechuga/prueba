@@ -98,6 +98,7 @@
     const mostrarDias = async () => {
       const nombreAlumno = alumnoSelect.value;
       const registrosAlumno = await obtenerRegistros(nombreAlumno);
+      console.log('Registros:', registrosAlumno); // <- agrega esto
 
       diasContainer.innerHTML = '';
       for (let i = 0; i < NUM_DIAS; i++) {
