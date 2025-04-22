@@ -1,18 +1,68 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Registro Básico</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registro de Actividades</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+      background: #f4f4f4;
+    }
+    form {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      margin-top: 1rem;
+      padding: 0.5rem;
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
-  <h1>Formulario de Registro</h1>
-  <form id="form">
-    <label>Nombre: <input type="text" id="nombre" required></label><br><br>
-    <label>Correo: <input type="email" id="correo" required></label><br><br>
-    <button type="submit">Enviar</button>
+  <h1>Registro de Actividad</h1>
+  <form id="registroForm">
+    <label for="nombre">Nombre del alumno:</label>
+    <input type="text" id="nombre" name="nombre" required />
+    <button type="submit">Registrar actividad</button>
   </form>
-
   <p id="mensaje"></p>
 
-  <script type="module" src="app.js"></script>
+  <script>
+    const APP_ID = 'A1FE9350-3CAD-48A9-BBE5-19EF0CEF5BE8';
+    const API_KEY = '7FCC1F26-6267-4304-98C8-663B1A1B3D03';
+    const URL = `https://api.backendless.com/${APP_ID}/${API_KEY}/data/registros`;
+
+    const form = document.getElementById('registroForm');
+    const mensaje = document.getElementById('mensaje');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nombre = document.getElementById('nombre').value;
+      const fecha = new Date();
+
+      try {
+        const res = await fetch(URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, fecha, actividad: true })
+        });
+
+        const data = await res.json();
+        mensaje.textContent = '✅ Actividad registrada con éxito';
+        form.reset();
+      } catch (error) {
+        mensaje.textContent = '❌ Error al registrar actividad';
+        console.error(error);
+      }
+    });
+  </script>
 </body>
 </html>
