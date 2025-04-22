@@ -3,66 +3,135 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Registro de Actividades</title>
+  <title>Registro Diario de Actividad</title>
   <style>
     body {
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      font-family: Arial, sans-serif;
       padding: 2rem;
-      background: #f4f4f4;
+      background: #f9f9f9;
     }
-    form {
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
       background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
     }
-    input, button {
-      margin-top: 1rem;
+    h1 {
+      text-align: center;
+    }
+    select, button {
       padding: 0.5rem;
       width: 100%;
+      margin-top: 1rem;
+    }
+    .day {
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      margin: 5px;
+      background-color: #ccc;
+      text-align: center;
+      line-height: 50px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .day.done {
+      background-color: #4caf50;
+      color: white;
+    }
+    .day.disabled {
+      background-color: #e0e0e0;
+      cursor: not-allowed;
+    }
+    .day:hover:not(.disabled) {
+      background-color: #8bc34a;
+    }
+    .day.selected {
+      background-color: #ffeb3b;
     }
   </style>
 </head>
 <body>
-  <h1>Registro de Actividad</h1>
-  <form id="registroForm">
-    <label for="nombre">Nombre del alumno:</label>
-    <input type="text" id="nombre" name="nombre" required />
-    <button type="submit">Registrar actividad</button>
-  </form>
-  <p id="mensaje"></p>
+  <div class="container">
+    <h1>Registro de Actividad Diario</h1>
+    <label for="alumno">Selecciona tu nombre:</label>
+    <select id="alumno">
+      <option value="Emanuel">Emanuel</option>
+      <option value="Lucero">Lucero</option>
+      <option value="Tony">Tony</option>
+      <option value="Paty">Paty</option>
+      <option value="Modesto">Modesto</option>
+      <option value="Teresa">Teresa</option>
+      <option value="Genesis">Genesis</option>
+      <option value="José Perez">José Perez</option>
+      <option value="Aylin">Aylin</option>
+      <option value="Alexis">Alexis</option>
+      <option value="Eduar">Eduar</option>
+      <option value="Joselin">Joselin</option>
+      <option value="Nancy">Nancy</option>
+    </select>
+    <button id="registrarBtn">Registrar actividad</button>
+
+    <h3>Progreso de 60 días:</h3>
+    <div id="diasContainer"></div>
+  </div>
 
   <script>
     const APP_ID = 'A1FE9350-3CAD-48A9-BBE5-19EF0CEF5BE8';
     const API_KEY = '7FCC1F26-6267-4304-98C8-663B1A1B3D03';
     const URL = `https://api.backendless.com/${APP_ID}/${API_KEY}/data/registros`;
 
-    const form = document.getElementById('registroForm');
-    const mensaje = document.getElementById('mensaje');
+    const diasContainer = document.getElementById('diasContainer');
+    const registrarBtn = document.getElementById('registrarBtn');
+    const alumnoSelect = document.getElementById('alumno');
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const nombre = document.getElementById('nombre').value;
-      const fecha = new Date();
+    const ALUMNOS = ["Emanuel", "Lucero", "Tony", "Paty", "Modesto", "Teresa", "Genesis", "José Perez", "Aylin", "Alexis", "Eduar", "Joselin", "Nancy"];
+    const NUM_DIAS = 60;
 
-      try {
-        const res = await fetch(URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nombre, fecha, actividad: true })
+    const obtenerRegistros = async (alumno) => {
+      const res = await fetch(`${URL}?where=nombre%20%3D%20%27${alumno}%27`);
+      const data = await res.json();
+      return data.map((registro) => new Date(registro.fecha).toISOString().split('T')[0]);
+    };
+
+    const mostrarDias = async () => {
+      const nombreAlumno = alumnoSelect.value;
+      const registrosAlumno = await obtenerRegistros(nombreAlumno);
+
+      diasContainer.innerHTML = '';
+      for (let i = 0; i < NUM_DIAS; i++) {
+        const dia = new Date();
+        dia.setDate(dia.getDate() - NUM_DIAS + i);
+        const diaStr = dia.toISOString().split('T')[0];
+
+        const diaDiv = document.createElement('div');
+        diaDiv.classList.add('day');
+        diaDiv.textContent = `${dia.getDate()}/${dia.getMonth() + 1}`;
+
+        if (registrosAlumno.includes(diaStr)) {
+          diaDiv.classList.add('done');
+        } else if (new Date() > dia) {
+          diaDiv.classList.add('disabled');
+        }
+
+        diaDiv.addEventListener('click', async () => {
+          if (!diaDiv.classList.contains('done') && !diaDiv.classList.contains('disabled')) {
+            const res = await fetch(URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ nombre: nombreAlumno, fecha: diaStr, actividad: true })
+            });
+            diaDiv.classList.add('done');
+            alert("¡Actividad registrada para el día " + dia.getDate() + "!");
+          }
         });
 
-        const data = await res.json();
-        mensaje.textContent = '✅ Actividad registrada con éxito';
-        form.reset();
-      } catch (error) {
-        mensaje.textContent = '❌ Error al registrar actividad';
-        console.error(error);
+        diasContainer.appendChild(diaDiv);
       }
-    });
+    };
+
+    registrarBtn.addEventListener('click', mostrarDias);
   </script>
 </body>
 </html>
