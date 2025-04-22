@@ -25,30 +25,12 @@
       width: 100%;
       margin-top: 1rem;
     }
-    .day {
-      display: inline-block;
-      width: 50px;
-      height: 50px;
-      margin: 5px;
-      background-color: #ccc;
+    #contadorProgreso {
+      font-weight: bold;
       text-align: center;
-      line-height: 50px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .day.done {
-      background-color: #4caf50;
-      color: white;
-    }
-    .day.disabled {
-      background-color: #e0e0e0;
-      cursor: not-allowed;
-    }
-    .day:hover:not(.disabled) {
-      background-color: #8bc34a;
-    }
-    .day.selected {
-      background-color: #ffeb3b;
+      margin-top: 2rem;
+      font-size: 1.2rem;
+      color: #333;
     }
   </style>
 </head>
@@ -73,8 +55,7 @@
     </select>
     <button id="registrarBtn">Registrar actividad</button>
 
-    <h3>Progreso de 60 días:</h3>
-    <div id="diasContainer"></div>
+    <p id="contadorProgreso"></p>
   </div>
 
   <script>
@@ -82,9 +63,9 @@
     const API_KEY = '7FCC1F26-6267-4304-98C8-663B1A1B3D03';
     const URL = `https://api.backendless.com/${APP_ID}/${API_KEY}/data/registros`;
 
-    const diasContainer = document.getElementById('diasContainer');
     const registrarBtn = document.getElementById('registrarBtn');
     const alumnoSelect = document.getElementById('alumno');
+    const contadorProgreso = document.getElementById('contadorProgreso');
     const NUM_DIAS = 60;
 
     const obtenerRegistros = async (alumno) => {
@@ -93,37 +74,19 @@
       return data.map((registro) => new Date(registro.fecha).toISOString().split('T')[0]);
     };
 
-    const mostrarDias = async () => {
+    const mostrarProgreso = async () => {
       const nombreAlumno = alumnoSelect.value;
       const registrosAlumno = await obtenerRegistros(nombreAlumno);
-
-      diasContainer.innerHTML = '';
-      for (let i = 0; i < NUM_DIAS; i++) {
-        const dia = new Date();
-        dia.setDate(dia.getDate() - NUM_DIAS + i);
-        const diaStr = dia.toISOString().split('T')[0];
-
-        const diaDiv = document.createElement('div');
-        diaDiv.classList.add('day');
-        diaDiv.textContent = `${dia.getDate()}/${dia.getMonth() + 1}`;
-
-        if (registrosAlumno.includes(diaStr)) {
-          diaDiv.classList.add('done');
-        } else if (new Date() > dia) {
-          diaDiv.classList.add('disabled');
-        }
-
-        diasContainer.appendChild(diaDiv);
-      }
+      const progreso = registrosAlumno.length;
+      contadorProgreso.textContent = `Has registrado actividad ${progreso} de ${NUM_DIAS} días.`;
     };
 
     const registrarHoy = async () => {
       const nombreAlumno = alumnoSelect.value;
-      const hoy = new Date();
-      const hoyStr = hoy.toISOString().split('T')[0];
-
+      const hoy = new Date().toISOString().split('T')[0];
       const registros = await obtenerRegistros(nombreAlumno);
-      if (registros.includes(hoyStr)) {
+
+      if (registros.includes(hoy)) {
         alert("Ya registraste tu actividad hoy.");
         return;
       }
@@ -131,18 +94,18 @@
       await fetch(URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre: nombreAlumno, fecha: hoyStr, actividad: true })
+        body: JSON.stringify({ nombre: nombreAlumno, fecha: hoy, actividad: true })
       });
 
       alert("¡Actividad registrada hoy!");
-      await mostrarDias(); // refresca calendario
+      await mostrarProgreso();
     };
 
     registrarBtn.addEventListener('click', registrarHoy);
-    alumnoSelect.addEventListener('change', mostrarDias);
+    alumnoSelect.addEventListener('change', mostrarProgreso);
 
     // Mostrar al cargar
-    mostrarDias();
+    mostrarProgreso();
   </script>
 </body>
 </html>
